@@ -1,19 +1,17 @@
+use server::Server;
+use http::HttpMethods;
+use http::Request;
 
-struct Server{
-    ip_addr:String,
-}
+mod http;
+mod server;
 
-impl Server{
-    fn new(addr:String)->Server{
-        Server{
-            ip_addr:addr
-        }
-    }
-    fn run(self){
-        println!("running on: {}",self.ip_addr);
-    }
-}
+
 fn main() {
-    let server=Server::new(String::from("127.0.0.1:8080"));
+    let get = HttpMethods::GET;
+    let post = HttpMethods::POST;
+
+    let server = Server::new("127.0.0.1:8080".to_string());
     server.run();
+    println!("{:?}", get);
+    println!("{:?}", post);
 }
