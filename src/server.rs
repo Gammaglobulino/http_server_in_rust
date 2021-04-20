@@ -22,7 +22,7 @@
                         match stream.read(&mut buffer){
                             Ok(_)=>{
                                 println!("Data received from request: {}",String::from_utf8_lossy(&buffer));
-                                match Request::try_from(&buffer[..]){
+                                match Request::try_from(&buffer[..]){ //lifetime initiation
                                     Ok(request) =>{},
                                     Err(e)=>println!("Failed to convert the buffer:{}",e),
                                 }

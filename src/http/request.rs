@@ -5,16 +5,16 @@ use std::error::Error;
 use std::fmt::{Display,Result as FmtResult,Formatter,Debug};
 use std::str;
 
-pub struct Request {
-    path: String,
-    query: Option<String>,
+pub struct Request<'from_buf> {
+    path: &'from_buf str,
+    query: Option<&'from_buf str>,
     method: HttpMethods,
 }
 
-//GET / HTTP/1.1
-impl TryFrom<&[u8]> for Request{
+// GET /search?name=abc&sort=1 HTTP/1.1 \r\n
+impl <'from_buf> TryFrom<&'from_buf [u8]> for Request<'from_buf>{
     type Error=ParseError;
-    fn try_from(buf: &[u8]) -> Result<Self, Self::Error>{
+    fn try_from(buf: &'from_buf [u8]) -> Result<Request<'from_buf>, Self::Error>{
         let request=str::from_utf8(buf)?;
         let (method,request)=get_next_world(request).ok_or(ParseError::InvalidRequest)?;
         let (mut path,request)=get_next_world(request).ok_or(ParseError::InvalidRequest)?;
@@ -24,15 +24,18 @@ impl TryFrom<&[u8]> for Request{
         }
         let method:HttpMethods=method.parse()?;
         let mut query_string=None;
-        match path.find('?'){
-            Some(i) => {
-                query_string=Some(&path[i+1 ..]);
-                path=&path[..i];
-            },
-            None=>{},
-        }
 
-        unimplemented!()
+        if let Some(i)=path.find('?'){
+            query_string=Some(&path[i+1 ..]); //everything before ?
+            path=&path[..i]; //everyting after ?
+        }
+        Ok(Self{
+            path,
+            query:query_string,
+            method,
+        })
+
+     
     }
 }
 
