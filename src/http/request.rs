@@ -3,11 +3,12 @@ use std::str::Utf8Error;
 use std::convert::TryFrom;
 use std::error::Error;
 use std::fmt::{Display,Result as FmtResult,Formatter,Debug};
+use super::QueryString;
 use std::str;
 
 pub struct Request<'from_buf> {
     path: &'from_buf str,
-    query: Option<&'from_buf str>,
+    query: Option<QueryString<'from_buf>>,
     method: HttpMethods,
 }
 
@@ -26,7 +27,7 @@ impl <'from_buf> TryFrom<&'from_buf [u8]> for Request<'from_buf>{
         let mut query_string=None;
 
         if let Some(i)=path.find('?'){
-            query_string=Some(&path[i+1 ..]); //everything before ?
+            query_string=Some(QueryString::from(&path[i+1 ..])); //everything before ?
             path=&path[..i]; //everyting after ?
         }
         Ok(Self{
