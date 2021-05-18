@@ -1,9 +1,16 @@
 
-    use crate::http::{Request,Response,StatusCode};
+    use crate::http::{Request,Response,StatusCode,ParseError};
     use std::net::TcpListener;
     use std::io::{Read,Write};
     use std::convert::TryFrom;
 
+    pub trait Handler{
+        fn handle_request(&mut self, request: &Request) ->Response;
+        fn handle_bad_request(&mut self,e:&ParseError) ->Response{
+            println!("Filed to parse request: {}",e);
+            Response::new(StatusCode::BadRequest, None)
+        }
+    }
     pub struct Server {
         ip_addr: String,
     }
@@ -12,7 +19,7 @@
         pub fn new(addr: String) -> Server {
             Server { ip_addr: addr }
         }
-        pub fn run(self) {
+        pub fn run(self, mut handler:impl Handler) {
             println!("running on: {}", self.ip_addr);
             let listener=TcpListener::bind(&self.ip_addr).unwrap();
             loop{
@@ -23,17 +30,8 @@
                             Ok(_)=>{
                                 println!("Data received from request: {}",String::from_utf8_lossy(&buffer));
                                 let response= match Request::try_from(&buffer[..]){ //lifetime initiation
-                                    Ok(request) =>{
-                                        dbg!(request);
-                                        Response::new(
-                                            StatusCode::Ok,
-                                            Some("<h1> it works babe</h1>".to_string()))
-                                    },
-        
-                                    Err(e)=>{
-                                        println!("Failed to receive data {}",e);
-                                        Response::new(StatusCode::BadRequest,None)
-                                    }  
+                                    Ok(request) => handler.handle_request(&request),
+                                    Err(e)=> handler.handle_bad_request(&e)
         
                                 };
                                 if let Err(e)=response.send(&mut stream){

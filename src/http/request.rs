@@ -12,6 +12,17 @@ pub struct Request<'from_buf> {
     query: Option<QueryString<'from_buf>>,
     method: HttpMethods,
 }
+impl<'from_buf> Request<'from_buf>{
+    pub fn path(&self) -> &'from_buf str{
+        &self.path
+    }
+    pub fn method(&self)-> &HttpMethods{
+        &self.method
+    }
+    pub fn query_string(&self) -> Option<&QueryString>{
+        self.query.as_ref()
+    }
+}
 
 // GET /search?name=abc&sort=1 HTTP/1.1 \r\n
 impl <'from_buf> TryFrom<&'from_buf [u8]> for Request<'from_buf>{
